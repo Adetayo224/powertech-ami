@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PowerTech AMI Dashboard</title>
+<style>
+:root {
+  --bg:       #0f172a;
+  --surface:  #1e293b;
+  --surface2: #334155;
+  --accent:   #3b82f6;
+  --accenthv: #2563eb;
+  --green:    #10b981;
+  --red:      #ef4444;
+  --text:     #f1f5f9;
+  --muted:    #94a3b8;
+  --border:   #334155;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  padding: 20px 16px 40px;
+}
+
+/* ── Header ── */
+header {
+  max-width: 900px; margin: 0 auto 32px;
+  display: flex; align-items: center;
+  justify-content: space-between; flex-wrap: wrap; gap: 12px;
+}
+.logo { font-size: 1.4rem; font-weight: 700; }
+.logo span { color: var(--accent); }
+.badge {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; padding: 7px 14px;
+  font-size: 0.82rem; color: var(--muted);
+}
+.badge strong { color: var(--text); }
+.dot {
+  display: inline-block; width: 8px; height: 8px;
+  background: var(--green); border-radius: 50%;
+  margin-right: 6px; animation: pulse 2s infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+
+/* ── Layout ── */
+main { max-width: 900px; margin: 0 auto; }
+.section-label {
+  font-size: .72rem; font-weight: 600;
+  text-transform: uppercase; letter-spacing: .1em;
+  color: var(--muted); margin-bottom: 14px;
+}
+
+/* ── Metric Cards ── */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 14px; margin-bottom: 14px;
+}
+.card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; padding: 22px; position: relative;
+}
+.card-icon { font-size: 1.6rem; margin-bottom: 10px; }
+.card-value {
+  font-size: 1.9rem; font-weight: 700; min-height: 2.3rem;
+  display: flex; align-items: baseline; gap: 4px;
+}
+.card-value.dim { color: var(--muted); font-size: 1.4rem; }
+.unit { font-size: .9rem; color: var(--muted); }
+.card-label { font-size: .83rem; color: var(--muted); margin-top: 6px; }
+.card-updated { font-size: .72rem; color: var(--muted); margin-top: 10px; }
+.mini-refresh {
+  position: absolute; top: 14px; right: 14px;
+  background: none; border: 1px solid var(--border);
+  border-radius: 6px; color: var(--muted);
+  padding: 3px 8px; cursor: pointer; font-size: .78rem;
+  transition: .15s;
+}
+.mini-refresh:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ── Refresh All ── */
+.refresh-all {
+  background: var(--accent); color: #fff; border: none;
+  border-radius: 8px; padding: 10px 22px;
+  font-size: .9rem; font-weight: 600; cursor: pointer;
+  transition: background .15s; margin-bottom: 32px;
+}
+.refresh-all:hover { background: var(--accenthv); }
+.refresh-all:disabled { background: var(--surface2); cursor: not-allowed; }
+
+/* ── Panel ── */
+.panel {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; padding: 22px; margin-bottom: 22px;
+}
+.panel h2 { font-size: 1rem; font-weight: 600; margin-bottom: 4px; }
+.panel-desc { font-size: .83rem; color: var(--muted); margin-bottom: 18px; }
+
+/* ── Token Input ── */
+.input-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.token-input {
+  flex: 1; min-width: 200px;
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: 8px; color: var(--text);
+  font-size: 1.05rem; font-family: 'Courier New', monospace;
+  letter-spacing: .12em; padding: 11px 14px; transition: .15s;
+}
+.token-input:focus { outline: none; border-color: var(--accent); }
+.token-input::placeholder { color: var(--muted); letter-spacing: .04em; font-size: .9rem; }
+.inject-btn {
+  background: var(--green); color: #fff; border: none;
+  border-radius: 8px; padding: 11px 22px;
+  font-size: .9rem; font-weight: 600; cursor: pointer;
+  transition: opacity .15s; white-space: nowrap;
+}
+.inject-btn:hover:not(:disabled) { opacity: .88; }
+.inject-btn:disabled { opacity: .45; cursor: not-allowed; }
+
+/* ── Relay Buttons ── */
+.relay-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.relay-btn {
+  padding: 10px 22px; border-radius: 8px; border: none;
+  font-size: .88rem; font-weight: 600; cursor: pointer; transition: opacity .15s;
+}
+.relay-btn:disabled { opacity: .45; cursor: not-allowed; }
+.relay-btn:hover:not(:disabled) { opacity: .85; }
+.relay-btn.on  { background: var(--green); color: #fff; }
+.relay-btn.off { background: var(--red);   color: #fff; }
+
+/* ── Status Box ── */
+.status {
+  margin-top: 14px; padding: 11px 14px;
+  border-radius: 8px; font-size: .88rem; display: none;
+}
+.status.show   { display: block; }
+.status.pending { background:rgba(59,130,246,.1); border:1px solid rgba(59,130,246,.3); color:#93c5fd; }
+.status.success { background:rgba(16,185,129,.1); border:1px solid rgba(16,185,129,.3); color:#6ee7b7; }
+.status.error   { background:rgba(239,68,68,.1);  border:1px solid rgba(239,68,68,.3);  color:#fca5a5; }
+
+/* ── Spinner ── */
+.spin {
+  display: inline-block; width: 14px; height: 14px;
+  border: 2px solid var(--border); border-top-color: var(--accent);
+  border-radius: 50%; animation: rot .7s linear infinite;
+  vertical-align: middle; margin-right: 8px;
+}
+@keyframes rot { to { transform: rotate(360deg); } }
+
+/* ── Footer ── */
+footer {
+  max-width: 900px; margin: 32px auto 0;
+  text-align: center; font-size: .75rem; color: var(--muted);
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Power<span>Tech</span> AMI</div>
+  <div class="badge">
+    <span class="dot"></span>
+    Meter: <strong>046252417921</strong> &nbsp;·&nbsp; Hexcell DDSY1088
+  </div>
+</header>
+
+<main>
+  <p class="section-label">Live Meter Readings</p>
+
+  <div class="cards">
+    <div class="card">
+      <div class="card-icon">💳</div>
+      <div class="card-value dim" id="val-credit">—</div>
+      <div class="card-label">Available Credit</div>
+      <div class="card-updated" id="upd-credit">Not loaded</div>
+      <button class="mini-refresh" onclick="readOne('credit')">↻</button>
+    </div>
+    <div class="card">
+      <div class="card-icon">⚡</div>
+      <div class="card-value dim" id="val-energy">—</div>
+      <div class="card-label">Active Energy (Total kWh)</div>
+      <div class="card-updated" id="upd-energy">Not loaded</div>
+      <button class="mini-refresh" onclick="readOne('energy')">↻</button>
+    </div>
+    <div class="card">
+      <div class="card-icon">📅</div>
+      <div class="card-value dim" id="val-monthly">—</div>
+      <div class="card-label">Monthly Usage</div>
+      <div class="card-updated" id="upd-monthly">Not loaded</div>
+      <button class="mini-refresh" onclick="readOne('monthly')">↻</button>
+    </div>
+  </div>
+
+  <button class="refresh-all" id="refresh-all" onclick="readAll()">↻ Refresh All Readings</button>
+
+  <p class="section-label">Token Injection</p>
+  <div class="panel">
+    <h2>Inject Recharge Token</h2>
+    <p class="panel-desc">Enter a 20-digit STS token to top up the meter remotely. Spaces and dashes are ignored.</p>
+    <div class="input-row">
+      <input
+        type="text" id="token-input" class="token-input"
+        placeholder="Enter 20-digit STS token..."
+        maxlength="25" inputmode="numeric"
+      >
+      <button class="inject-btn" id="inject-btn" onclick="injectToken()">⚡ Inject Token</button>
+    </div>
+    <div class="status" id="vend-status"></div>
+  </div>
+
+  <p class="section-label">Relay Control</p>
+  <div class="panel">
+    <h2>Meter Relay</h2>
+    <p class="panel-desc">Remotely connect or disconnect the meter relay. Use with caution — disconnecting cuts power to the premises.</p>
+    <div class="relay-row">
+      <button class="relay-btn on"  onclick="controlRelay('connect')">✓ Connect (ON)</button>
+      <button class="relay-btn off" onclick="controlRelay('disconnect')">✗ Disconnect (OFF)</button>
+    </div>
+    <div class="status" id="relay-status"></div>
+  </div>
+</main>
+
+<footer>PowerTech AMI Dashboard &nbsp;·&nbsp; Meter 046252417921</footer>
+
+<script>
+const POLL_MS  = 2500;
+const MAX_POLL = 14;
+
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const nowTime = () => new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+
+// ── Card helpers ──────────────────────────────────────────────
+function setLoading(type) {
+  const v = document.getElementById(`val-${type}`);
+  const u = document.getElementById(`upd-${type}`);
+  v.innerHTML = `<span class="spin"></span>`;
+  v.className = 'card-value dim';
+  u.textContent = 'Loading…';
+}
+
+function setCard(type, items) {
+  const v = document.getElementById(`val-${type}`);
+  const u = document.getElementById(`upd-${type}`);
+  if (!items) {
+    v.innerHTML = 'Error';
+    v.className = 'card-value dim';
+    u.textContent = `Failed at ${nowTime()}`;
+    return;
+  }
+  const list = Array.isArray(items) ? items : [items];
+  if (list.length === 0) { setCard(type, null); return; }
+  const primary = list[0];
+  const val  = primary.Data_Str  || primary.data_str  || String(primary);
+  const unit = primary.Data_Unit || primary.data_unit || '';
+  v.innerHTML = `${val}<span class="unit">${unit}</span>`;
+  v.className = 'card-value';
+  u.textContent = `Updated ${nowTime()}`;
+}
+
+// ── API helpers ───────────────────────────────────────────────
+async function triggerRead(type) {
+  const r = await fetch(`/api/trigger?type=${type}`);
+  const d = await r.json();
+  if (d.error) throw new Error(d.error);
+  return d.taskId;
+}
+
+async function pollData(taskId) {
+  for (let i = 0; i < MAX_POLL; i++) {
+    await sleep(POLL_MS);
+    const r = await fetch(`/api/poll?taskId=${taskId}`);
+    const d = await r.json();
+    if (d.ready) return d.data;
+  }
+  return null;
+}
+
+async function pollCmd(taskId) {
+  for (let i = 0; i < MAX_POLL; i++) {
+    await sleep(POLL_MS);
+    const r = await fetch(`/api/cmdstatus?taskId=${taskId}`);
+    const d = await r.json();
+    if (d.done) return d.ok;
+  }
+  return null;
+}
+
+// ── Read meters ───────────────────────────────────────────────
+async function readOne(type) {
+  setLoading(type);
+  try {
+    const taskId = await triggerRead(type);
+    const data   = await pollData(taskId);
+    setCard(type, data);
+  } catch (e) {
+    setCard(type, null);
+  }
+}
+
+async function readAll() {
+  const btn = document.getElementById('refresh-all');
+  btn.disabled = true;
+  btn.textContent = 'Refreshing…';
+  await Promise.all(['credit','energy','monthly'].map(readOne));
+  btn.disabled = false;
+  btn.textContent = '↻ Refresh All Readings';
+}
+
+// ── Status helpers ─────────────────────────────────────────────
+function showStatus(id, type, msg) {
+  const el = document.getElementById(id);
+  el.className = `status show ${type}`;
+  el.innerHTML = type === 'pending' ? `<span class="spin"></span>${msg}` : msg;
+}
+
+// ── Token injection ────────────────────────────────────────────
+async function injectToken() {
+  const input = document.getElementById('token-input');
+  const btn   = document.getElementById('inject-btn');
+  const token = input.value.replace(/\D/g, '');
+
+  if (token.length !== 20) {
+    showStatus('vend-status', 'error', '✗ Token must be exactly 20 digits.');
+    return;
+  }
+
+  btn.disabled = true;
+  showStatus('vend-status', 'pending', 'Sending token to meter…');
+
+  try {
+    const r = await fetch('/api/vend', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({token})
+    });
+    const d = await r.json();
+
+    if (d.error) { showStatus('vend-status','error',`✗ ${d.error}`); btn.disabled=false; return; }
+    if (!d.taskId) { showStatus('vend-status','error','✗ No task ID returned. Check Vercel logs.'); btn.disabled=false; return; }
+
+    showStatus('vend-status', 'pending', `Waiting for meter confirmation… (task: ${d.taskId})`);
+    const ok = await pollCmd(d.taskId);
+
+    if (ok === true) {
+      showStatus('vend-status', 'success', '✓ Token injected successfully! Refreshing credit…');
+      input.value = '';
+      readOne('credit');
+    } else if (ok === false) {
+      showStatus('vend-status', 'error', '✗ Token rejected. It may be invalid or already used.');
+    } else {
+      showStatus('vend-status', 'error', '✗ Timed out waiting for confirmation. The meter may still be processing — check the AMI portal.');
+    }
+  } catch (e) {
+    showStatus('vend-status', 'error', `✗ ${e.message}`);
+  }
+  btn.disabled = false;
+}
+
+// ── Relay control ──────────────────────────────────────────────
+async function controlRelay(action) {
+  const label = action === 'connect' ? 'Connect' : 'Disconnect';
+  if (!confirm(`Are you sure you want to ${label} the meter relay?\n\nThis will ${action === 'connect' ? 'restore power to' : 'cut power from'} the premises.`)) return;
+
+  document.querySelectorAll('.relay-btn').forEach(b => b.disabled = true);
+  showStatus('relay-status', 'pending', `Sending ${label} command to meter…`);
+
+  try {
+    const r = await fetch('/api/relay', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({action})
+    });
+    const d = await r.json();
+
+    if (d.error) { showStatus('relay-status','error',`✗ ${d.error}`); document.querySelectorAll('.relay-btn').forEach(b=>b.disabled=false); return; }
+    if (!d.taskId) { showStatus('relay-status','error','✗ No task ID returned.'); document.querySelectorAll('.relay-btn').forEach(b=>b.disabled=false); return; }
+
+    showStatus('relay-status', 'pending', `Waiting for relay ${label.toLowerCase()} confirmation…`);
+    const ok = await pollCmd(d.taskId);
+
+    if (ok === true)   showStatus('relay-status', 'success', `✓ Relay ${label}ed successfully.`);
+    else if (ok===false) showStatus('relay-status', 'error',   `✗ Relay ${label} failed. Check the AMI portal.`);
+    else               showStatus('relay-status', 'error',   '✗ Timed out — check the AMI portal for actual status.');
+  } catch (e) {
+    showStatus('relay-status', 'error', `✗ ${e.message}`);
+  }
+  document.querySelectorAll('.relay-btn').forEach(b => b.disabled = false);
+}
+
+// Auto-load on open
+window.addEventListener('load', readAll);
+</script>
+</body>
+</html>
