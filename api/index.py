@@ -4,6 +4,12 @@ import requests as http
 
 app = Flask(__name__)
 
+@app.route("/")
+def index():
+    html = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'public', 'index.html')
+    with open(html, encoding='utf-8') as f:
+        return f.read(), 200, {'Content-Type': 'text/html; charset=utf-8'}
+
 BASE_URL   = os.environ.get("METER_API_URL", "http://47.243.132.219:8039/api/Meter")
 USER_ID    = os.environ.get("METER_USER_ID", "N245")
 PASSWORD   = os.environ.get("METER_PASSWORD", "nig0115")
